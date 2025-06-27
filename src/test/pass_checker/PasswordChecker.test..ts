@@ -1,4 +1,7 @@
-import { PasswordChecker } from "../../app/pass_checker/PasswordChecker";
+import {
+  PasswordChecker,
+  PasswordError,
+} from "../../app/pass_checker/PasswordChecker";
 
 describe("PasswordChecker test suite", () => {
   let sut: PasswordChecker;
@@ -6,7 +9,51 @@ describe("PasswordChecker test suite", () => {
     sut = new PasswordChecker();
   });
 
-  it("Should do nothing for the comment", () => {
-    sut.checkPassword();
+  it("Password with less than 8 chars is invalid", () => {
+    const actual = sut.checkPassword("123456");
+    expect(actual.valid).toBe(false);
+    expect(actual.reason).toContain(PasswordError.SHORT);
+  });
+
+  it("Password with more than 8 chars is valid", () => {
+    const actual = sut.checkPassword("12345678Abc");
+    expect(actual.valid).toBe(true);
+    expect(actual.reason).not.toContain(PasswordError.SHORT);
+  });
+
+  it("Password with no uppercase letter is invalid", () => {
+    const actual = sut.checkPassword("1234abcd");
+    expect(actual.valid).toBe(false);
+    expect(actual.reason).toContain(PasswordError.UPPER_CASE);
+  });
+
+  it("Password with uppercase letter is valid", () => {
+    const actual = sut.checkPassword("1234Abcd");
+    expect(actual.valid).toBe(true);
+    expect(actual.reason).not.toContain(PasswordError.UPPER_CASE);
+  });
+
+  it("Password with no lowercase letter is invalid", () => {
+    const actual = sut.checkPassword("1234ABCD");
+    expect(actual.valid).toBe(false);
+    expect(actual.reason).toContain(PasswordError.LOWER_CASE);
+  });
+
+  it("Complex password is valid", () => {
+    const actual = sut.checkPassword("1234abCD");
+    expect(actual.valid).toBe(true);
+    expect(actual.reason).toHaveLength(0);
+  });
+
+  it("Admin password with no number is invalid", () => {
+    const actual = sut.checkAdminPassword("abCDBCDY");
+    expect(actual.valid).toBe(false);
+    expect(actual.reason).toContain(PasswordError.NUMBER);
+  });
+
+  it("Admin password with number is valid", () => {
+    const actual = sut.checkAdminPassword("abCDBCDY123");
+    expect(actual.valid).toBe(true);
+    expect(actual.reason).not.toContain(PasswordError.NUMBER);
   });
 });
